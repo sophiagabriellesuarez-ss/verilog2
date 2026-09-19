@@ -1,4 +1,3 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
 # SPDX-License-Identifier: Apache-2.0
 
 import cocotb
@@ -7,34 +6,32 @@ from cocotb.triggers import ClockCycles
 
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_dipswitch_passthrough(dut):
+    dut._log.info("start")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
+    # Even though this design is combinational, TT always provides a clock
+    # and reset, so we drive them the standard way.
+    clock = Clock(dut.clk, 10, units="us")
     cocotb.start_soon(clock.start())
 
-    # Reset
-    dut._log.info("Reset")
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
 
-    dut._log.info("Test project behavior")
+    dut._log.info("checking switch -> segment/LED passthrough")
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    test_patterns = [0x00, 0x3F, 0xFF, 0x81, 0xA5, 0x01, 0x80]
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    for pattern in test_patterns:
+        dut.ui_in.value = pattern
+        await ClockCycles(dut.clk, 2)
+        assert dut.uo_out.value == pattern, (
+            f"pattern {pattern:#04x}: expected uo_out={pattern:#04x}, "
+            f"got {int(dut.uo_out.value):#04x}"
+        )
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
-
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    dut._log.info("all patterns passed")
