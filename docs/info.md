@@ -1,20 +1,25 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
-Explain how your project works
+A purely combinational passthrough. Each of the first 7 dedicated input pins
+(`ui_in[6:0]`) is wired straight to one segment of a 7-segment display
+(`uo_out[6:0]`, segments A through G). The 8th input pin (`ui_in[7]`) drives
+a standalone LED on `uo_out[7]`.
+
+There's no clock-dependent behaviour: the outputs update immediately whenever
+the inputs change.
 
 ## How to test
 
-Explain how to use your project
+Wire 8 switches (or a logic analyzer / microcontroller driving the pins) to
+`ui_in[7:0]`. Toggle them and confirm the corresponding bit appears on
+`uo_out[7:0]`. The included cocotb testbench (`test/test.py`) sweeps a set of
+bit patterns through `ui_in` and checks that `uo_out` matches exactly.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+- 7-segment display (segments A-G on `uo_out[0]` through `uo_out[6]`)
+- 1 LED on `uo_out[7]`
+- 8 switches or a compatible input source on `ui_in[7:0]`
+
+Add current-limiting resistors (~220-330 ohm) in series with each segment
+and the LED.
